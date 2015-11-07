@@ -1,0 +1,79 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../expandjs/expandjs.html">
+<link rel="import" href="../tux-d3/tux-d3.html">
+<script>
+  /* @polymerBehavior Tux.d3DataConsumerBehavior */
+
+  TuxD3.DataConsumerBehaviorImpl =  {
+
+    properties: {
+        isDataConsumer: {
+            type: Boolean,
+            value: true,
+            readOnly: true,
+            notify: true,
+            reflectToAttribute: true
+        },
+
+        dataSource: {
+            type: String,
+            value: '',
+            notify: true,
+        },
+
+        /* this is what gets plotted / drawn in context of consumers */
+        data: {
+            type: Array,
+            value: function() { return []; },
+            notify: true,
+        },
+
+        observers: [ '_refresh(data.splices)' ],
+    },
+
+    /* element that provides the data */
+    _dataSource: null,
+
+    listeners: {
+        'd3-data-changed': '_handleDataChanged'
+    },
+
+    /* returns a range of data from the data source */
+
+    _handleDataChanged: function(event) {
+        var self = this;
+        var firer = event.detail.firer;
+        var data = event.detail.data;
+        console.log('handling data changed');
+        self.data = XP.filter(data, self.filter);
+    },
+
+    attachDataSource: function(source) {
+        var self = this;
+        XP.assertArgument(XP.isElement(source), 1, 'an element');
+        XP.assertOption(XP.isBoolean(source.isDataSource) && XP.isTrue(source.isDataSource),
+            'source.isDataSource', 'must be true');
+        if(self._dataSource) {
+            self._dataSource.unsubscribe(self);
+        }
+        self._dataSource = source;
+        self._dataSource.subscribe(self);
+    },
+
+    detachDataSource: function() {
+        var self = this;
+        self._dataSource.unsubscribe(self);
+        self._dataSource = null;
+    },
+
+    filter: function(obj) {
+        return true;
+    }
+
+  };
+
+  /* @polymerBehavior */
+  TuxD3.DataConsumerBehavior = [
+      TuxD3.DataConsumerBehaviorImpl
+  ];
+</script>
